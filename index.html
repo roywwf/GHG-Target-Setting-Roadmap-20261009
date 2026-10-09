@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESG GHG Target Setting Interactive Roadmap</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- FontAwesome Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --primary-green: #1b4332;
+    --accent-green: #2d6a4f;
+    --light-green: #d8f3dc;
+    --card-bg: #f8faf8;
+    --border-color: #d0ded0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif;
+    background-color: #f3f4f6;
+    color: #1f2937;
+  }
+
+  /* Status Colors */
+  .status-not-started { border-left: 5px solid #9ca3af; }
+  .status-in-progress { border-left: 5px solid #f59e0b; }
+  .status-completed { border-left: 5px solid #10b981; }
+
+  .badge-not-started { background-color: #f3f4f6; color: #4b5563; }
+  .badge-in-progress { background-color: #fef3c7; color: #92400e; }
+  .badge-completed { background-color: #d1fae5; color: #065f46; }
+
+  /* Color Preservation for Print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Custom Print Optimization */
+  @media print {
+    @page {
+      size: A4 landscape;
+      margin: 8mm;
+    }
+
+    html, body {
+      background-color: #ffffff !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+
+    .no-print {
+      display: none !important;
+    }
+
+    .print-full-width {
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .grid-matrix {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 10px !important;
+      width: 100% !important;
+    }
+
+    .card {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      box-shadow: none !important;
+      border: 1px solid #d0ded0 !important;
+    }
+
+    .print-note-display {
+      display: block !important;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    textarea.print-hide {
+      display: none !important;
+    }
+  }
+
+  .print-note-display {
+    display: none;
+  }
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Header Banner -->
+  <header class="bg-[#1b4332] text-white shadow-md no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="bg-[#2d6a4f] text-xs font-semibold px-2.5 py-1 rounded text-green-100 uppercase tracking-wider">ESG Strategy Tool</span>
+          <span class="text-xs text-green-200">GHG Protocol & SBTi Aligned</span>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight mt-1">GHG Target Setting Roadmap</h1>
+        <p class="text-xs text-green-200 mt-0.5">溫室氣體目標設定路線圖與管理儀表板</p>
+      </div>
+
+      <!-- Quick Controls -->
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Language Switcher -->
+        <div class="bg-[#2d6a4f] p-1 rounded-lg flex text-xs font-medium">
+          <button id="lang-both" onclick="setLanguage('both')" class="px-2.5 py-1 rounded bg-white text-[#1b4332] font-semibold transition">Bilingual / 雙語</button>
+          <button id="lang-en" onclick="setLanguage('en')" class="px-2.5 py-1 rounded text-green-100 hover:text-white transition">EN</button>
+          <button id="lang-tc" onclick="setLanguage('tc')" class="px-2.5 py-1 rounded text-green-100 hover:text-white transition">繁中</button>
+        </div>
+
+        <!-- Export & Print -->
+        <button onclick="triggerPrint()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3.5 py-2 rounded-lg font-medium flex items-center gap-1.5 transition shadow-sm">
+          <i class="fa-solid fa-file-pdf"></i> Export / Print PDF
+        </button>
+        
+        <button onclick="resetProgress()" class="bg-red-800/60 hover:bg-red-800 text-red-100 text-xs px-2.5 py-2 rounded-lg font-medium flex items-center gap-1 transition" title="Reset all saved status and notes">
+          <i class="fa-solid fa-rotate-left"></i> Reset
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Progress Bar & Filter Toolbar -->
+  <section class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6 no-print">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <!-- Progress Summary -->
+        <div class="flex-1">
+          <div class="flex justify-between items-center mb-1.5">
+            <span class="text-xs font-bold text-gray-700 uppercase tracking-wide">Roadmap Target Implementation Progress</span>
+            <span id="progress-text" class="text-xs font-bold text-[#1b4332]">0 / 11 Steps Completed (0%)</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+            <div id="progress-bar" class="bg-emerald-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <span class="text-gray-500 font-medium">Filter Status:</span>
+          <button onclick="filterStatus('all')" id="btn-filter-all" class="filter-btn px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-semibold">All (11)</button>
+          <button onclick="filterStatus('completed')" id="btn-filter-completed" class="filter-btn px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200">Completed</button>
+          <button onclick="filterStatus('in-progress')" id="btn-filter-in-progress" class="filter-btn px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200">In Progress</button>
+          <button onclick="filterStatus('not-started')" id="btn-filter-not-started" class="filter-btn px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200">Not Started</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Header for Print View -->
+  <div class="hidden print:block text-center mb-4 pt-2">
+    <h1 class="text-2xl font-bold text-[#1b4332] uppercase tracking-wide">GHG Target Setting Roadmap / 溫室氣體目標設定路線圖</h1>
+    <div class="flex justify-center items-center gap-4 text-xs text-gray-600 mt-1">
+      <span>Executive Status & Strategy Action Plan</span>
+      <span>•</span>
+      <span id="print-date">Generated Report</span>
+      <span>•</span>
+      <span id="print-progress-summary">Status Summary</span>
+    </div>
+  </div>
+
+  <!-- Main Roadmap Grid -->
+  <main class="max-w-7xl print-full-width mx-auto w-full px-4 sm:px-6 lg:px-8 pb-12 flex-grow">
+    <div id="roadmap-grid" class="grid-matrix grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- Cards populated dynamically -->
+    </div>
+  </main>
+
+  <!-- Step Details Modal -->
+  <div id="step-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-100">
+      <div id="modal-header" class="bg-[#1b4332] text-white p-5 flex justify-between items-start rounded-t-xl">
+        <div>
+          <span id="modal-step-num" class="text-xs font-semibold uppercase tracking-wider text-green-200">Step Detail</span>
+          <h2 id="modal-step-title" class="text-xl font-bold mt-0.5">Step Title</h2>
+        </div>
+        <button onclick="closeModal()" class="text-green-200 hover:text-white text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Objective & Description / 目標與說明</h3>
+          <p id="modal-desc-en" class="text-sm text-gray-800 font-medium"></p>
+          <p id="modal-desc-tc" class="text-sm text-gray-600 mt-1 pb-3 border-b border-gray-100"></p>
+        </div>
+
+        <div>
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Key Guidance & Recommended Frameworks / 參考指引與標準</h3>
+          <ul id="modal-guidance" class="list-disc pl-5 text-xs text-gray-700 space-y-1.5">
+            <!-- Populated dynamically -->
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Step Status / 執行狀態</h3>
+          <select id="modal-status-select" onchange="updateModalStatus()" class="w-full text-xs p-2.5 rounded-lg border border-gray-300 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 font-semibold">
+            <option value="not-started">⚪ Not Started / 未開始</option>
+            <option value="in-progress">🟡 In Progress / 進行中</option>
+            <option value="completed">🟢 Completed / 已完成</option>
+          </select>
+        </div>
+
+        <div>
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Internal Working Notes / 內部紀錄與備註</h3>
+          <textarea id="modal-notes" rows="4" oninput="saveModalNotes()" placeholder="Type key decisions, responsible owners, or target deadlines here..." class="w-full text-xs p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+        </div>
+      </div>
+      <div class="bg-gray-50 px-6 py-3.5 rounded-b-xl flex justify-end">
+        <button onclick="closeModal()" class="bg-[#1b4332] text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-[#2d6a4f] transition">Save & Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-gray-400 text-xs py-6 mt-auto no-print">
+    <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+      <p>ESG & GHG Target Setting Roadmap Standard Reference Guide | Aligned with GHG Protocol Corporate Standard, SBTi Criteria, ISO 14064-1 & HKEX ESG Reporting Guide</p>
+      <p class="text-gray-500">All saved status and reflections are automatically stored in your browser local cache.</p>
+    </div>
+  </footer>
+
+  <!-- Application Logic JS -->
+  <script>
+    // Data definition for all 11 Steps
+    const roadmapSteps = [
+      {
+        id: 1,
+        titleEn: "01. COMMIT",
+        titleTc: "取得管理層承諾",
+        icon: "fa-handshake",
+        category: "Governance",
+        descEn: "Secure board and senior management support to drive action, allocate resources and ensure accountability.",
+        descTc: "取得董事會及高層管理支持，以推動行動、提供資源及建立問責機制。",
+        guidance: [
+          "Establish formal board oversight for climate risk and emissions performance.",
+          "Sign executive commitment letters (e.g. Science Based Targets initiative commitment).",
+          "Integrate GHG reduction KPIs into executive compensation structures."
+        ]
+      },
+      {
+        id: 2,
+        titleEn: "02. CHOOSE",
+        titleTc: "選擇目標類型",
+        icon: "fa-code-branch",
+        category: "Target Definition",
+        descEn: "Choose between an Absolute Target (total emissions reduction) or an Intensity Target (emissions per business metric).",
+        descTc: "選擇絕對減排目標（總排放量減少）或強度減排目標（每單位業務活動的排放量減少）。",
+        guidance: [
+          "Absolute Targets guarantee net emissions reductions regardless of business growth.",
+          "Intensity Targets normalize emissions by metrics like revenue, floor area, or unit produced.",
+          "SBTi recommends absolute targets or intensity targets aligned with 1.5°C pathways."
+        ]
+      },
+      {
+        id: 3,
+        titleEn: "03. DEFINE",
+        titleTc: "界定目標範圍",
+        icon: "fa-globe",
+        category: "Scope & Boundary",
+        descEn: "Determine which emissions sources, operations, geographies and Scope 3 categories are covered.",
+        descTc: "確定納入目標的排放源、業務範圍、地區及範圍三 Scope 3 類別。",
+        guidance: [
+          "Cover 95%+ of Scope 1 and Scope 2 operational emissions.",
+          "Screen all 15 Scope 3 categories to include material value chain emissions (e.g. Scope 3 > 40% of total footprint).",
+          "Clearly define organizational boundary (Operational Control vs. Financial Control vs. Equity Share)."
+        ]
+      },
+      {
+        id: 4,
+        titleEn: "04. SELECT",
+        titleTc: "選定基準年",
+        icon: "fa-calendar-days",
+        category: "Baseline",
+        descEn: "Select a transparent reference year against which future emissions reductions will be measured.",
+        descTc: "選擇作為減排比較基準的參考年份，以便衡量未來減排成果。",
+        guidance: [
+          "Choose a recent year with reliable, verifiable, and representative GHG emissions data.",
+          "Establish a clear Base Year Recalculation Policy for structural changes (e.g. M&A, divestments)."
+        ]
+      },
+      {
+        id: 5,
+        titleEn: "05. SET",
+        titleTc: "設定目標完成年份",
+        icon: "fa-flag-checkered",
+        category: "Timeline",
+        descEn: "Define when the target should be achieved. Short-term targets support near-term action, while long-term targets enable strategic planning and investment.",
+        descTc: "訂定目標達成時間。短期目標有助推動即時行動，長期目標則有利規劃長遠投資及減排策略。",
+        guidance: [
+          "Near-term targets typically span 5–10 years from the baseline year.",
+          "Long-term targets align with Net-Zero by 2050 or earlier.",
+          "Align target milestone years with corporate strategic financial planning cycles."
+        ]
+      },
+      {
+        id: 6,
+        titleEn: "06. CONFIRM",
+        titleTc: "確認承諾期",
+        icon: "fa-clock",
+        category: "Timeline",
+        descEn: "Specify the period over which emissions performance will be measured and assessed against the target.",
+        descTc: "訂明評估及監測減排表現的時間週期，作為衡量是否達成目標的依據。",
+        guidance: [
+          "Set multi-year tracking intervals to smooth out annual operational fluctuations.",
+          "Establish annual review checkpoints for executive accountability."
+        ]
+      },
+      {
+        id: 7,
+        titleEn: "07. CONSIDER",
+        titleTc: "考慮是否使用碳抵銷",
+        icon: "fa-leaf",
+        category: "Rules & Strategy",
+        descEn: "Determine whether reductions will come solely from internal actions or include verified carbon offsets.",
+        descTc: "決定減排成果是否僅來自內部措施，或部分透過經認證的碳抵銷實現。",
+        guidance: [
+          "Prioritize direct decarbonization (energy efficiency, renewables) over carbon offsets.",
+          "Use carbon removal credits only for neutralizing residual emissions to reach final Net-Zero.",
+          "Verify carbon credits through high-integrity standards (e.g. Gold Standard, Verra VCS)."
+        ]
+      },
+      {
+        id: 8,
+        titleEn: "08. PREVENT",
+        titleTc: "預防重複計算",
+        icon: "fa-shield-halved",
+        category: "Rules & Strategy",
+        descEn: "Set clear rules to avoid counting the same emissions reduction or carbon credit more than once.",
+        descTc: "制定明確規則，避免同一減排成果或碳信用額被重複計算。",
+        guidance: [
+          "Ensure unique retirements in official carbon registries.",
+          "Align with Article 6 of the Paris Agreement for Corresponding Adjustments if transferring credits cross-border."
+        ]
+      },
+      {
+        id: 9,
+        titleEn: "09. SET LEVEL",
+        titleTc: "訂定減排幅度",
+        icon: "fa-chart-line-down",
+        category: "Target Ambition",
+        descEn: "Set a realistic yet ambitious reduction target based on emissions drivers, mitigation opportunities and business growth plans.",
+        descTc: "根據排放驅動因素、減排機會及企業發展計劃，制定具挑戰性且可實現的減排目標。",
+        guidance: [
+          "Align reduction ambition with 1.5°C climate science (e.g. ~4.2% linear annual reduction for Scope 1 & 2).",
+          "Conduct marginal abatement cost curve (MACC) analysis to identify cost-effective mitigation options."
+        ]
+      },
+      {
+        id: 10,
+        titleEn: "10. IMPLEMENT",
+        titleTc: "推行減排行動",
+        icon: "fa-gears",
+        category: "Execution",
+        descEn: "Develop and implement reduction initiatives based on identified emission hotspots and opportunities across operations and the value chain.",
+        descTc: "針對主要排放熱點及減排機會，推行重點減排行動，以減少自身營運及價值鏈的排放。",
+        guidance: [
+          "Implement energy efficiency upgrades, renewable energy PPA purchasing, and fleet electrification.",
+          "Engage key suppliers in Scope 3 decarbonization and sustainable procurement policies."
+        ]
+      },
+      {
+        id: 11,
+        titleEn: "11. TRACK",
+        titleTc: "追蹤及報告進展",
+        icon: "fa-chart-pie",
+        category: "Execution",
+        descEn: "Monitor performance regularly and report progress transparently to maintain credibility and accountability.",
+        descTc: "定期監測減排表現，並以透明方式披露進展，提升公信力及問責性。",
+        guidance: [
+          "Publish annual sustainability/ESG reports adhering to GRI, ISSB, or HKEX standards.",
+          "Obtain independent third-party assurance (ISO 14064-3 / ISAE 3000) to boost credibility."
+        ]
+      }
+    ];
+
+    // State Management
+    let currentLanguage = 'both'; // 'both', 'en', 'tc'
+    let currentFilter = 'all'; // 'all', 'completed', 'in-progress', 'not-started'
+    let activeModalStepId = null;
+
+    // Local Storage keys
+    const STATUS_KEY = 'esg_roadmap_status_v1';
+    const NOTES_KEY = 'esg_roadmap_notes_v1';
+    const MAIN_REFLECTION_KEY = 'esg_roadmap_reflection_v1';
+
+    let stepStatuses = JSON.parse(localStorage.getItem(STATUS_KEY)) || {};
+    let stepNotes = JSON.parse(localStorage.getItem(NOTES_KEY)) || {};
+
+    // Initialize Application
+    document.addEventListener('DOMContentLoaded', () => {
+      renderRoadmap();
+      updateProgress();
+    });
+
+    // Language Toggle
+    function setLanguage(lang) {
+      currentLanguage = lang;
+      
+      // Update toggle buttons styling
+      document.querySelectorAll('#lang-both, #lang-en, #lang-tc').forEach(btn => {
+        btn.className = "px-2.5 py-1 rounded text-green-100 hover:text-white transition";
+      });
+      document.getElementById(`lang-${lang}`).className = "px-2.5 py-1 rounded bg-white text-[#1b4332] font-semibold transition";
+
+      renderRoadmap();
+    }
+
+    // Filter Logic
+    function filterStatus(status) {
+      currentFilter = status;
+
+      // Update button styling
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.className = "filter-btn px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 text-xs";
+      });
+      const activeBtn = document.getElementById(`btn-filter-${status}`);
+      if(activeBtn) {
+        activeBtn.className = "filter-btn px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-semibold text-xs";
+      }
+
+      renderRoadmap();
+    }
+
+    // Update Status of a Step
+    function setStepStatus(stepId, status) {
+      stepStatuses[stepId] = status;
+      localStorage.setItem(STATUS_KEY, JSON.stringify(stepStatuses));
+      renderRoadmap();
+      updateProgress();
+    }
+
+    // Update Progress Bar
+    function updateProgress() {
+      const completedCount = roadmapSteps.filter(s => stepStatuses[s.id] === 'completed').length;
+      const total = roadmapSteps.length;
+      const percentage = Math.round((completedCount / total) * 100);
+
+      document.getElementById('progress-bar').style.width = `${percentage}%`;
+      document.getElementById('progress-text').innerText = `${completedCount} / ${total} Steps Completed (${percentage}%)`;
+      
+      const printSummary = document.getElementById('print-progress-summary');
+      if (printSummary) {
+        printSummary.innerText = `Completed: ${completedCount}/${total} (${percentage}%)`;
+      }
+    }
+
+    // Get Status Label Badge Text for Printing
+    function getStatusBadgeText(status) {
+      if (status === 'completed') return '🟢 Completed';
+      if (status === 'in-progress') return '🟡 In Progress';
+      return '⚪ Not Started';
+    }
+
+    // Render Grid Cards
+    function renderRoadmap() {
+      const container = document.getElementById('roadmap-grid');
+      container.innerHTML = '';
+
+      roadmapSteps.forEach(step => {
+        const status = stepStatuses[step.id] || 'not-started';
+
+        // Filter check
+        if (currentFilter !== 'all' && status !== currentFilter) {
+          return;
+        }
+
+        const card = document.createElement('div');
+        card.className = `card bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col shadow-sm transition hover:shadow-md status-${status}`;
+
+        // Language visibility classes
+        const showEn = currentLanguage === 'both' || currentLanguage === 'en';
+        const showTc = currentLanguage === 'both' || currentLanguage === 'tc';
+
+        const savedNote = stepNotes[step.id] ? stepNotes[step.id].trim() : '';
+
+        card.innerHTML = `
+          <!-- Header -->
+          <div class="bg-[#1b4332] text-white p-3 flex justify-between items-center text-xs font-bold">
+            <span class="flex items-center gap-1.5 truncate">
+              ${step.titleEn} ${showTc && showEn ? '|' : ''} ${showTc ? step.titleTc : ''}
+            </span>
+            <div class="flex items-center gap-2">
+              <span class="hidden print:inline-block text-[10px] bg-white/20 px-1.5 py-0.5 rounded text-white font-mono">
+                ${getStatusBadgeText(status)}
+              </span>
+              <div class="bg-white/20 rounded-full w-6 h-6 flex items-center justify-center shrink-0">
+                <i class="fa-solid ${step.icon} text-white text-[11px]"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div class="p-3.5 flex flex-col flex-grow justify-between gap-3">
+            <div>
+              ${showEn ? `<p class="text-[12px] text-gray-800 leading-snug">${step.descEn}</p>` : ''}
+              ${showTc ? `<p class="text-[11.5px] text-gray-600 leading-snug ${showEn ? 'mt-2 pt-2 border-t border-dashed border-gray-200' : ''}">${step.descTc}</p>` : ''}
+            </div>
+
+            ${savedNote ? `
+              <div class="bg-amber-50 border border-amber-200 rounded p-1.5 text-[10.5px] text-amber-900 flex items-start gap-1">
+                <i class="fa-solid fa-note-sticky text-amber-600 mt-0.5 shrink-0"></i>
+                <span class="truncate whitespace-normal">${savedNote}</span>
+              </div>
+            ` : ''}
+
+            <!-- Controls (Status & Modal trigger) -->
+            <div class="pt-2 border-t border-gray-100 flex items-center justify-between text-xs no-print">
+              <!-- Select Status -->
+              <select onchange="setStepStatus(${step.id}, this.value)" class="text-[11px] font-medium py-1 px-2 rounded border border-gray-200 bg-gray-50 hover:bg-white focus:outline-none">
+                <option value="not-started" ${status === 'not-started' ? 'selected' : ''}>⚪ Not Started</option>
+                <option value="in-progress" ${status === 'in-progress' ? 'selected' : ''}>🟡 In Progress</option>
+                <option value="completed" ${status === 'completed' ? 'selected' : ''}>🟢 Completed</option>
+              </select>
+
+              <!-- Open Details Modal -->
+              <button onclick="openModal(${step.id})" class="text-[#2d6a4f] hover:text-[#1b4332] text-[11px] font-semibold flex items-center gap-1">
+                Guide & Notes <i class="fa-solid fa-angle-right"></i>
+              </button>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      // Append Reflection Card (Always Visible unless filtered out)
+      if (currentFilter === 'all') {
+        appendReflectionCard(container);
+      }
+    }
+
+    // Append 12th Reflection Card
+    function appendReflectionCard(container) {
+      const savedReflection = localStorage.getItem(MAIN_REFLECTION_KEY) || '';
+      
+      const card = document.createElement('div');
+      card.className = "card bg-blue-50/70 border border-blue-200 rounded-lg overflow-hidden flex flex-col shadow-sm";
+
+      card.innerHTML = `
+        <div class="bg-[#1a365d] text-white p-3 flex justify-between items-center text-xs font-bold">
+          <span>12. REFLECTION | 自我反思與評估</span>
+          <div class="bg-white/20 rounded-full w-6 h-6 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-pen-to-square text-white text-[11px]"></i>
+          </div>
+        </div>
+        <div class="p-3.5 flex flex-col flex-grow justify-between gap-2.5">
+          <div class="text-[11.5px] text-blue-900 leading-snug">
+            <strong>Key Strategic Questions / 重要思考問題：</strong>
+            <ul class="list-disc pl-4 mt-1 space-y-0.5 text-[11px] text-blue-800">
+              <li>Which target type aligns best with our business model?</li>
+              <li>What Scope 3 boundary gaps need attention first?</li>
+            </ul>
+          </div>
+          <div>
+            <textarea id="main-reflection-text" oninput="saveReflection(this.value)" rows="3" placeholder="Enter notes or strategic action items here / 在此輸入紀錄或行動要點..." class="print-hide w-full text-[11px] p-2 border border-blue-200 rounded bg-white focus:ring-2 focus:ring-blue-400 focus:outline-none resize-none">${savedReflection}</textarea>
+            <div id="print-reflection-display" class="print-note-display text-[10.5px] text-blue-950 p-2 bg-white border border-blue-200 rounded min-h-[50px]">${savedReflection ? savedReflection : '<span class="italic text-gray-400">No notes entered.</span>'}</div>
+          </div>
+        </div>
+      `;
+
+      container.appendChild(card);
+    }
+
+    // Modal Operations
+    function openModal(stepId) {
+      activeModalStepId = stepId;
+      const step = roadmapSteps.find(s => s.id === stepId);
+      if (!step) return;
+
+      document.getElementById('modal-step-num').innerText = `Step 0${step.id} • ${step.category}`;
+      document.getElementById('modal-step-title').innerText = `${step.titleEn} - ${step.titleTc}`;
+      document.getElementById('modal-desc-en').innerText = step.descEn;
+      document.getElementById('modal-desc-tc').innerText = step.descTc;
+
+      // Guidance List
+      const guidanceList = document.getElementById('modal-guidance');
+      guidanceList.innerHTML = step.guidance.map(g => `<li>${g}</li>`).join('');
+
+      // Status
+      document.getElementById('modal-status-select').value = stepStatuses[stepId] || 'not-started';
+
+      // Notes
+      document.getElementById('modal-notes').value = stepNotes[stepId] || '';
+
+      document.getElementById('step-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('step-modal').classList.add('hidden');
+      activeModalStepId = null;
+      renderRoadmap();
+      updateProgress();
+    }
+
+    function updateModalStatus() {
+      if (!activeModalStepId) return;
+      const status = document.getElementById('modal-status-select').value;
+      setStepStatus(activeModalStepId, status);
+    }
+
+    function saveModalNotes() {
+      if (!activeModalStepId) return;
+      const note = document.getElementById('modal-notes').value;
+      stepNotes[activeModalStepId] = note;
+      localStorage.setItem(NOTES_KEY, JSON.stringify(stepNotes));
+    }
+
+    function saveReflection(val) {
+      localStorage.setItem(MAIN_REFLECTION_KEY, val);
+      const printDisplay = document.getElementById('print-reflection-display');
+      if (printDisplay) {
+        printDisplay.innerHTML = val ? val.replace(/\n/g, '<br>') : '<span class="italic text-gray-400">No notes entered.</span>';
+      }
+    }
+
+    // Print & Export Handler
+    function triggerPrint() {
+      // Set current print date header
+      const printDateEl = document.getElementById('print-date');
+      if (printDateEl) {
+        const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        printDateEl.innerText = `Date: ${dateStr}`;
+      }
+
+      // Sync reflection text display for printable container
+      const reflectionInput = document.getElementById('main-reflection-text');
+      const reflectionValue = reflectionInput ? reflectionInput.value : (localStorage.getItem(MAIN_REFLECTION_KEY) || '');
+      saveReflection(reflectionValue);
+
+      // Temporarily switch filter to 'all' so complete roadmap prints out
+      const previousFilter = currentFilter;
+      if (currentFilter !== 'all') {
+        filterStatus('all');
+      }
+
+      // Trigger Print Dialogue
+      window.print();
+
+      // Restore filter state after print if it was changed
+      if (previousFilter !== 'all') {
+        setTimeout(() => {
+          filterStatus(previousFilter);
+        }, 500);
+      }
+    }
+
+    function resetProgress() {
+      if (confirm('Are you sure you want to reset all tracked statuses and notes?')) {
+        localStorage.removeItem(STATUS_KEY);
+        localStorage.removeItem(NOTES_KEY);
+        localStorage.removeItem(MAIN_REFLECTION_KEY);
+        stepStatuses = {};
+        stepNotes = {};
+        renderRoadmap();
+        updateProgress();
+      }
+    }
+  </script>
+</body>
+</html>
